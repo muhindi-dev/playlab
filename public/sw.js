@@ -1,4 +1,4 @@
-const CACHE = "pixel-colour-fun-v2";
+const CACHE = "shay-zay-pixel-fun-v4";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (event) => {

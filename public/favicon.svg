@@ -1,1 +1,14 @@
-<svg width="512" height="512" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="16" fill="#201653"/><path fill="#ec5b9b" d="M0 0h16v16H0zM48 16h16v16H48z"/><path fill="#47c8ff" d="M16 0h16v16H16zM0 32h16v16H0zM32 48h16v16H32z"/><path fill="#7657ed" d="M32 0h16v16H32zM16 48h16v16H16z"/><path fill="#ff9f1c" d="M48 0h16v16H48zM0 48h16v16H0z"/><path fill="#ffe04b" d="m32 13 5.7 11.5 12.7 1.9-9.2 8.9 2.2 12.6L32 42l-11.4 5.9 2.2-12.6-9.2-8.9 12.7-1.9z"/></svg>
+<svg width="512" height="512" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="6" y1="3" x2="59" y2="63" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#30D5FF"/>
+      <stop offset=".48" stop-color="#6D4AFF"/>
+      <stop offset="1" stop-color="#FF5BA7"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#g)"/>
+  <rect x="7" y="7" width="50" height="50" rx="15" fill="#111438" stroke="#fff" stroke-opacity=".92" stroke-width="2"/>
+  <path d="M14 14h7v7h-7zm29 0h7v7h-7zM14 43h7v7h-7zm29 0h7v7h-7z" fill="#30D5FF" opacity=".9"/>
+  <text x="15" y="39" fill="white" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-size="23" font-weight="900">S</text>
+  <text x="33" y="44" fill="#FFD34D" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-size="23" font-weight="900">Z</text>
+</svg>

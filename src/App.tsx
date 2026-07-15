@@ -9,9 +9,10 @@ type Game = { size: number; cells: number[]; colours: string[]; totals: number[]
 type Level = { name: string; sub: string; size: number; colours: number; icon: string };
 
 const LEVELS: Level[] = [
-  { name: "Big pixels", sub: "Easiest to colour", size: 18, colours: 10, icon: "🟨" },
-  { name: "Photo pixels", sub: "Best picture match", size: 30, colours: 16, icon: "✨" },
-  { name: "Tiny pixels", sub: "Most photo detail", size: 42, colours: 22, icon: "🔍" },
+  { name: "Big pixels", sub: "Quick & easy · 10 colours", size: 18, colours: 10, icon: "●" },
+  { name: "Photo pixels", sub: "Great balance · 16 colours", size: 30, colours: 16, icon: "◆" },
+  { name: "Tiny pixels", sub: "Extra detail · 22 colours", size: 42, colours: 22, icon: "✦" },
+  { name: "Ultra pixels", sub: "Finest detail · 32 colours", size: 56, colours: 32, icon: "✺" },
 ];
 
 const ROCKET = [
@@ -123,7 +124,7 @@ async function photoToGame(file: File, level: Level): Promise<Game> {
 }
 
 function Logo() {
-  return <span className="logo" aria-hidden="true"><i>★</i></span>;
+  return <span className="logo" aria-hidden="true"><i>S<span>Z</span></i></span>;
 }
 
 export default function Home() {
@@ -294,19 +295,20 @@ export default function Home() {
 
     {!game ? <div className="home">
       <header>
-        <div className="brand"><Logo/><h1>Pixel <span>Colour</span> Fun</h1></div>
+        <div className="brand"><Logo/><h1>Shay &amp; Zay <span>Pixel Fun</span></h1></div>
         <button className="privacy" onClick={() => setPrivacy(true)}><b>🛡️</b><span><strong>Private &amp; safe</strong><small>Photos stay on this iPad</small></span></button>
       </header>
       <section className="hero">
         <div className="intro">
-          <p className="eyebrow">Make your own pixel magic</p>
-          <h2>Turn a photo into pixel art!</h2>
-          <p>Snap something you love, then colour it by number.</p>
+          <p className="eyebrow"><span>✦</span> Your private pixel studio</p>
+          <h2>Snap it. Pixel it.<br/><em>Make it yours.</em></h2>
+          <p>Turn any photo into a colour-by-number adventure.</p>
           <button className="take" onClick={() => camera.current?.click()}>📷 <span>Take a Photo</span></button>
           <button className="choose" onClick={() => photos.current?.click()}>🖼️ <span>Choose a Photo</span></button>
+          <div className="hero-chips"><span>⚡ Works offline</span><span>🚫 No ads</span><span>🔒 Photos stay here</span></div>
         </div>
         <div className="demo">
-          <h3>Your picture becomes pixel art!</h3>
+          <h3><span>LIVE PREVIEW</span> Your picture becomes pixel art</h3>
           <div className="sparkles">✦　★　✧　✦</div>
           <div className="demo-grid">
             {ROCKET.join("").split("").map((v, i) => {
@@ -324,7 +326,7 @@ export default function Home() {
     </div> : <div className="game">
       <header className="game-head">
         <button className="back" onClick={newPicture} aria-label="Back">‹</button>
-        <div className="mini-brand"><Logo/><strong>Pixel Colour Fun</strong></div>
+        <div className="mini-brand"><Logo/><strong>Shay &amp; Zay <span>Pixel Fun</span></strong></div>
         <div className="progress"><span><b>{progress}%</b> {progress === 100 ? "Amazing!" : "Keep colouring!"}</span><i><b style={{ width: `${progress}%` }}/></i></div>
         <button className="new" onClick={() => camera.current?.click()}>📷 <span>New photo</span></button>
       </header>
@@ -335,11 +337,11 @@ export default function Home() {
         </aside>
         <div className="board">
           <div className="board-top">
-            <p>Colour every <b style={{ "--swatch": game.colours[selected] } as CSSProperties}>{selected + 1}</b></p>
+            <p><span className="mission-label">Your mission</span> Colour every <b style={{ "--swatch": game.colours[selected] } as CSSProperties}>{selected + 1}</b></p>
             <div className="brush-control"><span>🖌️ Brush</span>{[1, 3, 5].map((size) => <button key={size} className={brushSize === size ? "active" : ""} onClick={() => setBrushSize(size)}>{size}×</button>)}</div>
             <div className="zoom-control"><button className="fit" disabled={zoom === 1} onClick={fitBoard}>Fit</button><button disabled={zoom <= 1} onClick={() => setBoardZoom(zoom - .5)}>−</button><span>{Math.round(zoom * 100)}%</span><button disabled={zoom >= 5} onClick={() => setBoardZoom(zoom + .5)}>+</button></div>
           </div>
-          <div ref={viewport} className="grid-scroll"><div ref={grid} className="pixel-grid" style={{ "--size": game.size, width: fitSize * zoom, height: fitSize * zoom, minWidth: fitSize * zoom, minHeight: fitSize * zoom } as CSSProperties}
+          <div ref={viewport} className="grid-scroll"><span className="gesture-hint">Drag to colour · Pinch to zoom</span><div ref={grid} className="pixel-grid" style={{ "--size": game.size, width: fitSize * zoom, height: fitSize * zoom, minWidth: fitSize * zoom, minHeight: fitSize * zoom } as CSSProperties}
             onPointerDown={pointerDown}
             onPointerMove={pointerMove}
             onPointerUp={pointerEnd}
@@ -353,8 +355,8 @@ export default function Home() {
     {pending && preview && <div className="overlay"><section className="size-modal">
       <button className="close" onClick={() => { URL.revokeObjectURL(preview); setPending(null); setPreview(""); }}>×</button>
       <div className="preview"><img src={preview} alt="Chosen photo" /></div>
-      <div className="levels"><p className="eyebrow">One more step</p><h2>Choose your pixel size</h2><p>Photo pixels give the best mix of detail and easy colouring.</p>
-        {LEVELS.map((level, i) => <button key={level.size} className={i === 1 ? "recommended" : ""} disabled={loading} onClick={() => begin(level)}><i>{level.icon}</i><span><b>{level.name}</b><small>{level.sub}</small></span>{i === 1 && <em>BEST MATCH</em>}<strong>›</strong></button>)}
+      <div className="levels"><p className="eyebrow">Choose your challenge</p><h2>How detailed?</h2><p>More pixels and colours make the finished picture look closer to your photo.</p>
+        {LEVELS.map((level, i) => <button key={level.size} className={i === 1 ? "recommended" : i === 3 ? "ultra" : ""} disabled={loading} onClick={() => begin(level)}><i>{level.icon}</i><span><b>{level.name}</b><small>{level.sub}</small></span><span className="level-spec"><b>{level.size}×{level.size}</b><small>pixels</small></span>{i === 1 && <em>POPULAR</em>}{i === 3 && <em>MAX DETAIL</em>}<strong>›</strong></button>)}
         {loading && <div className="loading"><i/> Making pixel magic…</div>}
       </div>
     </section></div>}
