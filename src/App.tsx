@@ -178,7 +178,7 @@ async function photoToGame(file: File, level: Level): Promise<Game> {
 }
 
 function Logo() {
-  return <span className="logo" aria-hidden="true"><i>S<span>Z</span></i></span>;
+  return <span className="logo" aria-hidden="true"><img src="./comet-icon-192.png" alt="" /></span>;
 }
 
 type PixelCellProps = {

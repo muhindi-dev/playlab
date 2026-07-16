@@ -1,5 +1,5 @@
-const CACHE = "shay-zay-pixel-fun-v7";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./favicon.svg", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
+const CACHE = "shay-zay-pixel-fun-v8";
+const CORE = ["./", "./index.html", "./manifest-comet.webmanifest", "./favicon.svg", "./comet-apple-touch-icon.png", "./comet-icon-192.png", "./comet-icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {

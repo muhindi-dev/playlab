@@ -36,17 +36,11 @@ button:focus-visible { outline:4px solid var(--cyan); outline-offset:3px; }
   width:68px; height:68px; flex:0 0 68px;
   display:grid; place-items:center;
   border:3px solid rgba(255,255,255,.96); border-radius:22px;
-  color:white; background:linear-gradient(145deg,var(--cyan),var(--violet) 48%,var(--pink));
+  overflow:hidden; color:white; background:var(--night);
   box-shadow:0 8px 18px rgba(79,57,207,.26),inset 0 1px 0 rgba(255,255,255,.6);
   rotate:-3deg; animation:logoDrift 5.5s ease-in-out infinite; will-change:translate;
 }
-.logo i {
-  width:51px; height:51px; display:flex; align-items:center; justify-content:center;
-  gap:1px; border-radius:16px; font-style:normal; font-size:24px; line-height:1;
-  font-weight:1000; letter-spacing:-.12em; background:rgba(13,18,62,.86);
-  text-shadow:0 2px 8px rgba(48,213,255,.6);
-}
-.logo i span { color:var(--sun); transform:translateY(4px); }
+.logo img { width:100%; height:100%; display:block; object-fit:cover; }
 .eyebrow {
   margin:0 0 10px; color:#bfb4ff; font-size:13px; font-weight:950;
   letter-spacing:.13em; text-transform:uppercase;
@@ -253,7 +247,6 @@ button:focus-visible { outline:4px solid var(--cyan); outline-offset:3px; }
 .game-head { width:100%; min-height:76px; padding:7px 11px; border:1px solid rgba(47,40,111,.1); border-radius:25px; background:rgba(255,255,255,.84); backdrop-filter:blur(18px); display:flex; align-items:center; gap:14px; box-shadow:0 9px 27px rgba(31,27,83,.09); animation:headerDrop .5s cubic-bezier(.2,.8,.2,1) .05s both; }
 .back { width:54px; height:54px; flex:0 0 54px; border:0; border-radius:18px; background:#eeedff; color:var(--ink); font-size:43px; line-height:1; }
 .mini-brand .logo { width:48px; height:48px; flex-basis:48px; border-radius:16px; }
-.mini-brand .logo i { width:36px; height:36px; border-radius:11px; font-size:17px; }
 .mini-brand strong { font-size:clamp(16px,1.65vw,22px); white-space:nowrap; }
 .mini-brand strong span { color:var(--violet); }
 .mini-copy { display:grid; gap:3px; }
@@ -387,7 +380,6 @@ button:focus-visible { outline:4px solid var(--cyan); outline-offset:3px; }
   .brand { gap:9px; }
   .brand h1 { font-size:27px; }
   .logo { width:51px; height:51px; flex-basis:51px; border-radius:17px; }
-  .logo i { width:38px; height:38px; border-radius:12px; font-size:18px; }
   .privacy { width:53px; min-height:53px; padding:4px; justify-content:center; }
   .privacy b { width:41px; height:41px; }
   .privacy span { display:none; }
@@ -423,7 +415,6 @@ button:focus-visible { outline:4px solid var(--cyan); outline-offset:3px; }
   .play { padding-top:9px; }
   .board-top { min-height:50px; }
   .mini-brand .logo { width:43px; height:43px; flex-basis:43px; }
-  .mini-brand .logo i { width:32px; height:32px; }
 }
 
 @media (prefers-reduced-motion:reduce) {
