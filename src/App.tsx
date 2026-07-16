@@ -17,10 +17,19 @@ type SavedGame = {
   brushSize: number;
   thumbnail: string;
 };
+type CompletedPicture = {
+  id: string;
+  title: string;
+  completedAt: number;
+  image: string;
+};
 
 const SAVES_KEY = "shay-zay-pixel-saves-v1";
 const MAX_SAVES = 5;
-const APP_VERSION = "v10 TEST";
+const COMPLETED_DB = "shay-zay-pixel-library";
+const COMPLETED_STORE = "completed-pictures";
+const MAX_COMPLETED = 10;
+const APP_VERSION = "v11 TEST";
 
 function loadSavedGames(): SavedGame[] {
   try {
@@ -28,6 +37,63 @@ function loadSavedGames(): SavedGame[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter((save) => save?.id && save.game?.cells?.length === save.filled?.length).slice(0, MAX_SAVES);
   } catch { return []; }
+}
+
+function openCompletedLibrary() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(COMPLETED_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(COMPLETED_STORE)) {
+        request.result.createObjectStore(COMPLETED_STORE, { keyPath: "id" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function loadCompletedPictures() {
+  const database = await openCompletedLibrary();
+  return new Promise<CompletedPicture[]>((resolve, reject) => {
+    const transaction = database.transaction(COMPLETED_STORE, "readonly");
+    const request = transaction.objectStore(COMPLETED_STORE).getAll();
+    request.onsuccess = () => resolve((request.result as CompletedPicture[])
+      .filter((picture) => picture?.id && picture.image?.startsWith("data:image/"))
+      .sort((a, b) => b.completedAt - a.completedAt)
+      .slice(0, MAX_COMPLETED));
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => database.close();
+  });
+}
+
+async function storeCompletedPicture(picture: CompletedPicture) {
+  const database = await openCompletedLibrary();
+  return new Promise<CompletedPicture[]>((resolve, reject) => {
+    let kept: CompletedPicture[] = [];
+    const transaction = database.transaction(COMPLETED_STORE, "readwrite");
+    const store = transaction.objectStore(COMPLETED_STORE);
+    const request = store.getAll();
+    request.onsuccess = () => {
+      kept = [picture, ...(request.result as CompletedPicture[]).filter((item) => item.id !== picture.id)]
+        .sort((a, b) => b.completedAt - a.completedAt);
+      store.put(picture);
+      kept.slice(MAX_COMPLETED).forEach((item) => store.delete(item.id));
+      kept = kept.slice(0, MAX_COMPLETED);
+    };
+    transaction.oncomplete = () => { database.close(); resolve(kept); };
+    transaction.onerror = () => { database.close(); reject(transaction.error); };
+  });
+}
+
+async function removeCompletedPicture(id: string) {
+  const database = await openCompletedLibrary();
+  await new Promise<void>((resolve, reject) => {
+    const transaction = database.transaction(COMPLETED_STORE, "readwrite");
+    transaction.objectStore(COMPLETED_STORE).delete(id);
+    transaction.oncomplete = () => { database.close(); resolve(); };
+    transaction.onerror = () => { database.close(); reject(transaction.error); };
+  });
+  return loadCompletedPictures();
 }
 
 function makeThumbnail(game: Game) {
@@ -204,6 +270,7 @@ export default function Home() {
   const remainingCountRef = useRef<number[]>([]);
   const filledSyncTimer = useRef<number | null>(null);
   const saveNoticeTimer = useRef<number | null>(null);
+  const completedSaveId = useRef<string | null>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [paintStats, setPaintStats] = useState<{ done: number; remaining: number[] }>({ done: 0, remaining: [] });
   const [selected, setSelected] = useState(0);
@@ -217,6 +284,7 @@ export default function Home() {
   const [fitSize, setFitSize] = useState(480);
   const [brushSize, setBrushSize] = useState(1);
   const [savedGames, setSavedGames] = useState<SavedGame[]>(loadSavedGames);
+  const [completedPictures, setCompletedPictures] = useState<CompletedPicture[]>([]);
   const [currentSaveId, setCurrentSaveId] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState("");
 
@@ -300,6 +368,12 @@ export default function Home() {
     if (saveNoticeTimer.current !== null) window.clearTimeout(saveNoticeTimer.current);
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    loadCompletedPictures().then((pictures) => { if (active) setCompletedPictures(pictures); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
   const progress = game ? Math.round(paintStats.done / game.cells.length * 100) : 0;
   const remaining = paintStats.remaining;
 
@@ -372,6 +446,7 @@ export default function Home() {
     setPaintStats({ done: filledCount, remaining: [...remainingCounts] });
     setGame(save.game); setSelected(selectedColour); setBrushSize(save.brushSize || 1);
     setCurrentSaveId(save.id); setCelebrate(false); setPhotoError("");
+    completedSaveId.current = null;
     zoomRef.current = 1; setZoom(1);
   }
 
@@ -439,6 +514,7 @@ export default function Home() {
       setPaintStats({ done: 0, remaining: [...next.totals] });
       setGame(next); setSelected(0); setBrushSize(1);
       setCurrentSaveId(null);
+      completedSaveId.current = null;
       zoomRef.current = 1; setZoom(1);
       URL.revokeObjectURL(preview); setPreview(""); setPending(null);
     } catch {
@@ -598,6 +674,14 @@ export default function Home() {
     if (filledSyncTimer.current !== null) window.clearTimeout(filledSyncTimer.current);
     filledSyncTimer.current = null; filledRef.current = []; filledCountRef.current = 0; remainingCountRef.current = [];
     setGame(null); setPaintStats({ done: 0, remaining: [] }); setCelebrate(false); setPending(null); setPreview(""); setPhotoError(""); setCurrentSaveId(null); pointers.current.clear();
+    completedSaveId.current = null;
+  }
+
+  function downloadPicture(image: string, title: string) {
+    const link = document.createElement("a");
+    link.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "pixel-picture"}.png`;
+    link.href = image;
+    link.click();
   }
 
   function savePicture() {
@@ -606,7 +690,29 @@ export default function Home() {
     canvas.width = canvas.height = px * game.size;
     const ctx = canvas.getContext("2d"); if (!ctx) return;
     game.cells.forEach((c, i) => { ctx.fillStyle = game.colours[c]; ctx.fillRect(i % game.size * px, Math.floor(i / game.size) * px, px, px); });
-    const link = document.createElement("a"); link.download = "my-pixel-picture.png"; link.href = canvas.toDataURL(); link.click();
+    const image = canvas.toDataURL("image/png");
+    const progressSave = currentSaveId ? savedGames.find((save) => save.id === currentSaveId) : undefined;
+    const title = progressSave?.title ?? "Completed Picture";
+    downloadPicture(image, title);
+    const progressId = currentSaveId;
+    const id = completedSaveId.current ?? (progressId ? `completed-${progressId}` : `completed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`);
+    completedSaveId.current = id;
+    void storeCompletedPicture({ id, title, completedAt: Date.now(), image }).then((pictures) => {
+      setCompletedPictures(pictures);
+      if (progressId) {
+        const next = savedGames.filter((save) => save.id !== progressId);
+        if (persistSaves(next)) setCurrentSaveId(null);
+      }
+      showSaveMessage("Picture saved to Completed");
+    }).catch(() => showSaveMessage("Picture downloaded, but couldn't be added to Completed."));
+  }
+
+  async function deleteCompleted(picture: CompletedPicture) {
+    if (!window.confirm(`Delete ${picture.title} from Completed? This cannot be undone.`)) return;
+    try {
+      setCompletedPictures(await removeCompletedPicture(picture.id));
+      showSaveMessage("Completed picture deleted");
+    } catch { showSaveMessage("This iPad couldn't delete the picture right now."); }
   }
 
   return <main>
@@ -645,7 +751,9 @@ export default function Home() {
         <article><b>3</b><i>🖍️</i><div><h3>Colour it in</h3><p>Match the numbers</p></div></article>
       </section>
       <section className="saved-library">
-        <div className="saved-heading"><div><p className="eyebrow"><span>◆</span> Your game saves</p><h2>Saved pictures</h2><p>Pick up exactly where you stopped.</p></div><b>{savedGames.length} / {MAX_SAVES} slots</b></div>
+        <div className="saved-heading"><div><p className="eyebrow"><span>◆</span> Your private gallery</p><h2>Saved Progress Pictures</h2><p>Resume an adventure or revisit a finished masterpiece.</p></div></div>
+        <div className="library-section">
+          <div className="library-subhead"><div><h3>Progress / Resume</h3><p>Continue exactly where you stopped.</p></div><b>{savedGames.length} / {MAX_SAVES} slots</b></div>
         {savedGames.length ? <div className="saved-grid">{savedGames.map((save) => {
           const savedProgress = Math.round(save.filled.filter(Boolean).length / save.game.cells.length * 100);
           return <article key={save.id} className={savedProgress === 100 ? "complete-save" : ""}>
@@ -653,7 +761,16 @@ export default function Home() {
             <div className="saved-copy"><span>{savedProgress === 100 ? "Complete" : `${savedProgress}% coloured`}</span><h3>{save.title}</h3><small>Saved {new Date(save.updatedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</small><i><b style={{ width: `${savedProgress}%` }}/></i></div>
             <div className="saved-actions"><button onClick={() => resumeSaved(save)}>Resume</button><button onClick={() => deleteSaved(save)} aria-label={`Delete ${save.title}`}>Delete</button></div>
           </article>;
-        })}</div> : <div className="empty-saves"><i>◇</i><div><h3>No saved pictures yet</h3><p>Start colouring, then tap <b>Save Progress</b>. Your five save slots stay private on this iPad.</p></div></div>}
+        })}</div> : <div className="empty-saves"><i>◇</i><div><h3>No progress saved yet</h3><p>Start colouring, then tap <b>Save Progress</b>. Your five save slots stay private on this iPad.</p></div></div>}
+        </div>
+        <div className="library-section completed-section">
+          <div className="library-subhead"><div><h3>Completed</h3><p>Your latest finished pixel masterpieces.</p></div><b>{completedPictures.length} / {MAX_COMPLETED}</b></div>
+          {completedPictures.length ? <div className="completed-grid">{completedPictures.map((picture) => <article key={picture.id}>
+            <img src={picture.image} alt={picture.title} />
+            <div className="completed-copy"><span>Completed</span><h3>{picture.title}</h3><small>Saved {new Date(picture.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</small></div>
+            <div className="completed-actions"><button onClick={() => downloadPicture(picture.image, picture.title)}>Save again</button><button onClick={() => deleteCompleted(picture)} aria-label={`Delete ${picture.title}`}>Delete</button></div>
+          </article>)}</div> : <div className="empty-saves completed-empty"><i>✦</i><div><h3>No completed pictures yet</h3><p>Finish a picture and tap <b>Save Picture</b>. The latest 10 will appear here automatically.</p></div></div>}
+        </div>
       </section>
     </div> : <div className="game">
       <header className="game-head">
