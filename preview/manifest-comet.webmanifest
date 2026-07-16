@@ -1,7 +1,7 @@
 {
-  "name": "Shay & Zay Pixel Fun",
-  "short_name": "Shay & Zay",
-  "description": "Turn photos into private, offline colour-by-number pixel art.",
+  "name": "Shay & Zay PlayLab",
+  "short_name": "PlayLab",
+  "description": "Turn photos into private, offline pixel art and jigsaw puzzles.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
